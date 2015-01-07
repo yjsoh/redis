@@ -1,0 +1,12 @@
+language: c
+compiler:
+  - gcc
+  - clang
+before_install:
+  - sudo apt-get update -qq
+install:
+  - sudo apt-get install -y uuid-dev valgrind tcl8.5
+env:
+  - USE_NVML=yes
+  - USE_NVML=no
+script: make distclean && make && make test && make distclean && make noopt && make test
