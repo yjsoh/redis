@@ -1,3 +1,31 @@
+This is the enhanced version of Redis, providing the experimental support
+for Persistent Memory (http://pmem.io).
+
+The Persistent Memory support in Redis allows user to benefit from the
+byte-addressable, non-volatile memory with a direct load/store access,
+providing improved server performance and better durability.
+
+Compiling Redis with support for Persistent Memory enables additional configuration
+options for managing data persistence.  In particular, when running Redis
+in Append Only File mode, all the commands can be saved in a pmem-resident
+log file, instead of a plain-text append-only file stored on a conventional
+hard disk drive.
+
+PMEM-resident log files are implemented by libpmemlog library.  The libpmemlog
+is a part of Non-Volatile Memory Library (NVML), which is a library for using
+memory-mapped persistence, optimized specifically for Persistent Memory.
+Check http://pmem.io/nvml and http://pmem.io/nvml/libpmemlog for more information.
+
+All PM-related configuration options are described in `redis.conf`.
+
+To build Redis with PM support first you need initialize NVML repository:
+
+    % git submodule update --init
+
+Then build Redis with flag:
+
+    % make USE_NVML=yes
+
 Where to find complete Redis documentation?
 -------------------------------------------
 
@@ -76,23 +104,6 @@ To force compiling against libc malloc, use:
 To compile against jemalloc on Mac OS X systems, use:
 
     % make MALLOC=jemalloc
-
-NVML
-----
-
-It is possible to compile Redis with experimental support for NVML, adding
-option to configure AOF mode to save journal to the NVML pool. NVML mode is
-slower than conventional plan-text file on conventional hard drives, but is
-optimized for persistent memory (for more information check http://pmem.io).
-All related configuration options are described in `redis.conf`.
-
-To build Redis with NVML support first you need initialize NVML repository:
-
-    % git submodule update --init
-
-Then build Redis with flag:
-
-    % make USE_NVML=yes
 
 Verbose build
 -------------
