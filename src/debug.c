@@ -49,7 +49,6 @@
 #endif
 #endif
 
-
 /* ================================= Debugging ============================== */
 
 /* Compute the sha1 of string at 's' with 'len' bytes long.
