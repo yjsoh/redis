@@ -571,6 +571,15 @@ dictType setDictType = {
     NULL,                      /* key dup */
     NULL,                      /* val dup */
     dictSdsKeyCompare,         /* key compare */
+    dictSdsDestructor,         /* key destructor */
+    NULL                       /* val destructor */
+};
+
+dictType setDictTypeM = {
+    dictSdsHash,               /* hash function */
+    NULL,                      /* key dup */
+    NULL,                      /* val dup */
+    dictSdsKeyCompare,         /* key compare */
     dictSdsDestructorM,        /* key destructor */
     NULL                       /* val destructor */
 };

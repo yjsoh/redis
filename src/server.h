@@ -1304,6 +1304,7 @@ extern struct redisServer server;
 extern struct sharedObjectsStruct shared;
 extern dictType objectKeyPointerValueDictType;
 extern dictType setDictType;
+extern dictType setDictTypeM;
 extern dictType zsetDictType;
 extern dictType clusterNodesDictType;
 extern dictType clusterNodesBlackListDictType;

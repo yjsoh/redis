@@ -239,7 +239,7 @@ void setTypeConvertA(robj *setobj, int enc, alloc a) {
 
     if (enc == OBJ_ENCODING_HT) {
         int64_t intele;
-        dict *d = dictCreate(&setDictType,NULL);
+        dict *d = dictCreate(a->alloc == m_alloc->alloc ? &setDictTypeM : &setDictType,NULL);
         sds element;
 
         /* Presize the dict to avoid rehashing */
