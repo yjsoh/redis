@@ -2,7 +2,6 @@
 #include "atomicvar.h"
 
 #include <memkind.h>
-#include <memkind/internal/memkind_pmem.h>
 
 #define update_memkind_malloc_stat_alloc(__n) do { \
     size_t _n = (__n); \
@@ -63,7 +62,6 @@ void memkind_free_no_tcache_wrapper(void *ptr) {
     update_memkind_malloc_stat_free(oldsize);
     jemk_dallocx(ptr, MALLOCX_TCACHE_NONE);
 }
-
 
 size_t memkind_malloc_used_memory(void){
     size_t um;

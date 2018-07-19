@@ -50,7 +50,6 @@
 #include <signal.h>
 
 #include <memkind.h>
-#include <memkind/internal/memkind_pmem.h>
 
 typedef long long mstime_t; /* millisecond time type. */
 
@@ -1303,15 +1302,16 @@ typedef struct {
 extern struct redisServer server;
 extern struct sharedObjectsStruct shared;
 extern dictType objectKeyPointerValueDictType;
-extern dictType setDictType;
+extern dictType setDictTypeZ;
+extern dictType setDictTypeM;
 extern dictType zsetDictType;
 extern dictType clusterNodesDictType;
 extern dictType clusterNodesBlackListDictType;
 extern dictType dbDictType;
 extern dictType shaScriptObjectDictType;
 extern double R_Zero, R_PosInf, R_NegInf, R_Nan;
-extern dictType hashDictType;
 extern dictType hashDictTypeM;
+extern dictType hashDictTypeZ;
 extern dictType replScriptCacheDictType;
 extern dictType keyptrDictType;
 extern dictType modulesDictType;
