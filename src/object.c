@@ -201,7 +201,7 @@ robj *createZiplistObject(void) {
 }
 
 robj *createSetObjectA(alloc a) {
-    dict *d = dictCreate((!memcmp(a,z_alloc, sizeof(*a)) ? &setDictTypeZ : &setDictTypeM),NULL);
+    dict *d = dictCreate((!cmpAlloc(a,z_alloc) ? &setDictTypeZ : &setDictTypeM),NULL);
     robj *o = createObject(OBJ_SET,d);
     o->encoding = OBJ_ENCODING_HT;
     o->a = a;
@@ -445,7 +445,7 @@ robj *tryObjectEncodingA(robj *o, alloc a) {
     if (len <= OBJ_ENCODING_EMBSTR_SIZE_LIMIT) {
         robj *emb;
 
-        if (o->encoding == OBJ_ENCODING_EMBSTR && o->a == a) return o;
+        if (o->encoding == OBJ_ENCODING_EMBSTR && !cmpAlloc(o->a,a)) return o;
         emb = createEmbeddedStringObjectA(s,sdslen(s),a);
         decrRefCount(o);
         return emb;
@@ -462,7 +462,7 @@ robj *tryObjectEncodingA(robj *o, alloc a) {
      * OBJ_ENCODING_EMBSTR_SIZE_LIMIT. */
     if (o->encoding == OBJ_ENCODING_RAW &&
         sdsavail(s) > len/10 &&
-        o->a == a)
+        !cmpAlloc(o->a,a))
     {
         o->ptr = sdsRemoveFreeSpaceA(o->ptr,a);
     }

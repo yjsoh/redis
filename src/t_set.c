@@ -240,7 +240,7 @@ void setTypeConvertA(robj *setobj, int enc, alloc a) {
 
     if (enc == OBJ_ENCODING_HT) {
         int64_t intele;
-        dict *d = dictCreate((a->alloc == z_alloc->alloc ? &setDictTypeZ : &setDictTypeM),NULL);
+        dict *d = dictCreate((!cmpAlloc(a,z_alloc) ? &setDictTypeZ : &setDictTypeM),NULL);
         sds element;
 
         /* Presize the dict to avoid rehashing */
