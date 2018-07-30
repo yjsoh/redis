@@ -41,6 +41,7 @@ typedef void *(*urealloc)(void *ptr, size_t size);
 
 int je_get_defrag_hint(void* ptr, int *bin_util, int *run_util);
 
+/* If you want to change this structure remember to update allocCompare */
 struct __alloc {
     void *(*alloc)(size_t size);
     void *(*calloc)(size_t size);
@@ -77,6 +78,6 @@ static const struct __alloc __m_alloc = {
 };
 static const struct __alloc *m_alloc = &__m_alloc;
 
-int cmpAlloc(alloc lhs, alloc rhs);
+int allocCompare(alloc lhs, alloc rhs);
 
 #endif /* __ALLOC_H__ */
