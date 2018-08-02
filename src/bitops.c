@@ -487,7 +487,7 @@ robj *lookupStringForBitCommandA(client *c, size_t maxbit, alloc a) {
         if (checkType(c,o,OBJ_STRING)) return NULL;
         o = dbUnshareStringValueA(c->db,c->argv[1],o,a);
         o->ptr = sdsgrowzeroA(o->ptr,byte+1,a);
-        o->a = m_alloc;
+        o->a = a;
     }
     return o;
 }
