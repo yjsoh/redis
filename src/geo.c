@@ -445,7 +445,7 @@ void geoaddCommand(client *c) {
 
     /* Finally call ZADD that will do the work for us. */
     replaceClientCommandVector(c,argc,argv);
-    zaddCommand(c);
+    zaddCommandZ(c);
 }
 
 #define SORT_NONE 0
@@ -638,7 +638,7 @@ void georadiusGeneric(client *c, int flags) {
         size_t maxelelen = 0;
 
         if (returned_items) {
-            zobj = createZsetObject();
+            zobj = createZsetObjectM();
             zs = zobj->ptr;
         }
 

@@ -202,7 +202,7 @@ int hashTypeExists(robj *o, sds field) {
 
 int hashTypeSetA(robj *o, sds field, sds value, int flags, alloc a) {
     int update = 0;
-
+    serverAssert(!allocCompare(o->a,a));
     if (o->encoding == OBJ_ENCODING_ZIPLIST) {
         unsigned char *zl, *fptr, *vptr;
 
@@ -476,7 +476,7 @@ void hashTypeConvertZiplist(robj *o, int enc, alloc a) {
         int ret;
 
         hi = hashTypeInitIterator(o);
-        dict = dictCreate(&hashDictType, NULL);
+        dict = dictCreate(&hashDictTypeM, NULL);
 
         while (hashTypeNext(hi) != C_ERR) {
             sds key, value;
