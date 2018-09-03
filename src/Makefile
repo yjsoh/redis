@@ -249,6 +249,10 @@ ifeq ($(wildcard $(TEST_PMEM_DIR_PATH)),)
 endif
 	@(cd ..; ./runtest --conf tests/test.conf)
 
+test-debug:
+	$(MAKE) REDIS_CFLAGS="-D RDEBUG"
+	$(MAKE) test
+
 test-sentinel: $(REDIS_SENTINEL_NAME)
 	@(cd ..; ./runtest-sentinel)
 
