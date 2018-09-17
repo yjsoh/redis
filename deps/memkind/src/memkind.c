@@ -716,9 +716,9 @@ exit:
     return err;
 }
 
-MEMKIND_EXPORT int memkind_range(struct memkind **kind, void *ptr)
+MEMKIND_EXPORT int memkind_range(struct memkind *kind, void *ptr)
 {
-    struct memkind_pmem *priv = (*kind)->priv;
+    struct memkind_pmem *priv = kind->priv;
 
     return ((ptr >= priv->addr) && ptr <= (priv->addr + priv->max_size));
 }
