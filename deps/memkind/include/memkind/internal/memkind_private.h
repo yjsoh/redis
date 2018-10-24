@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 - 2017 Intel Corporation.
+ * Copyright (C) 2016 - 2018 Intel Corporation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,6 +64,7 @@ extern "C" {
 #define jemk_mallocx        JE_SYMBOL(mallocx)
 #define jemk_calloc         JE_SYMBOL(calloc)
 #define jemk_rallocx        JE_SYMBOL(rallocx)
+#define jemk_dallocx        JE_SYMBOL(dallocx)
 #define jemk_realloc        JE_SYMBOL(realloc)
 #define jemk_mallctl        JE_SYMBOL(mallctl)
 #define jemk_memalign       JE_SYMBOL(memalign)
