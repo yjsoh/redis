@@ -73,10 +73,10 @@ void* activeDefragAllocA(void *ptr, alloc a) {
     /* move this allocation to a new allocation.
      * make sure not to use the thread cache. so that we don't get back the same
      * pointers we try to free */
-    size = zmalloc_size(ptr);
-    newptr = zmalloc_no_tcache(size);
+    size = a->alloc_size(ptr);
+    newptr = a->alloc_no_tcache(size);
     memcpy(newptr, ptr, size);
-    zfree_no_tcache(ptr);
+    a->free_no_tcache(ptr);
     return newptr;
 }
 static inline void* activeDefragAlloc(void *ptr) { return activeDefragAllocA(ptr,z_alloc); }
@@ -97,7 +97,7 @@ sds activeDefragSdsA(sds sdsptr, alloc a) {
     }
     return NULL;
 }
-static inline sds activeDefragSdsM(sds sdsptr) { return activeDefragSdsA(sdsptr,z_alloc); }
+static inline sds activeDefragSdsM(sds sdsptr) { return activeDefragSdsA(sdsptr,m_alloc); }
 
 /* Defrag helper for robj and/or string objects
  *

@@ -299,6 +299,10 @@ void *memkind_realloc(memkind_t kind, void *ptr, size_t size);
 /* Free memory allocated with the memkind API */
 void memkind_free(memkind_t kind, void *ptr);
 
+/* EXPERIMENTAL API */
+/* check if ptr belongs to this memory kind */
+int memkind_range(struct memkind *kind, void *ptr);
+
 #ifdef __cplusplus
 }
 #endif
