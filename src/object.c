@@ -78,12 +78,6 @@ robj *createRawStringObject(const char *ptr, size_t len) {
     return createObject(OBJ_STRING, sdsnewlen(ptr,len));
 }
 
-#ifdef USE_MEMKIND
-robj *createRawStringObjectPM(const char *ptr, size_t len) {
-    return createObject(OBJ_STRING, sdsnewlenPM(ptr,len));
-}
-#endif
-
 /* Create a string object with encoding OBJ_ENCODING_EMBSTR, that is
  * an object where the sds string is actually an unmodifiable string
  * allocated in the same chunk as the object itself. */
@@ -131,7 +125,7 @@ robj *createStringObject(const char *ptr, size_t len) {
 
 #ifdef USE_MEMKIND
 robj *createStringObjectPM(const char *ptr, size_t len) {
-    return createRawStringObjectPM(ptr,len);
+    return createObject(OBJ_STRING, sdsnewlenPM(ptr,len));
 }
 #endif
 
