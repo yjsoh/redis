@@ -78,10 +78,11 @@ robj *createRawStringObject(const char *ptr, size_t len) {
     return createObject(OBJ_STRING, sdsnewlen(ptr,len));
 }
 
+#ifdef USE_MEMKIND
 robj *createRawStringObjectPM(const char *ptr, size_t len) {
     return createObject(OBJ_STRING, sdsnewlenPM(ptr,len));
 }
-
+#endif
 
 /* Create a string object with encoding OBJ_ENCODING_EMBSTR, that is
  * an object where the sds string is actually an unmodifiable string
@@ -128,9 +129,11 @@ robj *createStringObject(const char *ptr, size_t len) {
         return createRawStringObject(ptr,len);
 }
 
+#ifdef USE_MEMKIND
 robj *createStringObjectPM(const char *ptr, size_t len) {
     return createRawStringObjectPM(ptr,len);
 }
+#endif
 
 /* Create a string object from a long long value. When possible returns a
  * shared integer object, or at least an integer encoded one.
@@ -517,9 +520,10 @@ robj *tryObjectEncoding(robj *o) {
     {
         o->ptr = sdsRemoveFreeSpace(o->ptr);
     }
+#ifdef USE_MEMKING
     // move string type content to PMEM
     o->ptr = sdstoPM(o->ptr);
-
+#endif
     /* Return the original object. */
     return o;
 }

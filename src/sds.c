@@ -143,6 +143,7 @@ sds sdsnewlen(const void *init, size_t initlen) {
     return s;
 }
 
+#ifdef USE_MEMKIND
 sds sdsnewlenPM(const void *init, size_t initlen) {
     void *sh;
     sds s;
@@ -201,6 +202,7 @@ sds sdsnewlenPM(const void *init, size_t initlen) {
     s[initlen] = '\0';
     return s;
 }
+#endif
 
 /* Create an empty (zero length) sds string. Even in this case the string
  * always has an implicit null term. */
@@ -219,12 +221,15 @@ sds sdsdup(const sds s) {
     return sdsnewlen(s, sdslen(s));
 }
 
+#ifdef USE_MEMKIND
 sds sdstoPM(sds s) {
     if ((s[-1] & SDS_TYPE_MASK) <= SDS_TYPE_8) return s;
     sds new = sdsnewlenPM(s, sdslen(s));
     sdsfree(s);
     return new;
 }
+#endif
+
 /* Free an sds string. No operation is performed if 's' is NULL. */
 void sdsfree(sds s) {
     if (s == NULL) return;

@@ -42,8 +42,10 @@ void listTypePush(robj *subject, robj *value, int where) {
     if (subject->encoding == OBJ_ENCODING_QUICKLIST) {
         int pos = (where == LIST_HEAD) ? QUICKLIST_HEAD : QUICKLIST_TAIL;
         value = getDecodedObject(value);
+#ifdef USE_MEMKIND
         // move list content to PMEM
         value->ptr = sdstoPM(value->ptr);
+#endif
         size_t len = sdslen(value->ptr);
         quicklistPush(subject->ptr, value->ptr, len, pos);
         decrRefCount(value);
@@ -143,8 +145,10 @@ robj *listTypeGet(listTypeEntry *entry) {
 void listTypeInsert(listTypeEntry *entry, robj *value, int where) {
     if (entry->li->encoding == OBJ_ENCODING_QUICKLIST) {
         value = getDecodedObject(value);
+#ifdef USE_MEMKIND
         // move list content to PM
         value->ptr = sdstoPM(value->ptr);
+#endif
         sds str = value->ptr;
         size_t len = sdslen(str);
         if (where == LIST_TAIL) {
@@ -353,8 +357,10 @@ void lsetCommand(client *c) {
 
     if (o->encoding == OBJ_ENCODING_QUICKLIST) {
         quicklist *ql = o->ptr;
+#ifdef USE_MEMKIND
         // move list content to PM
         value->ptr = sdstoPM(value->ptr);
+#endif
         int replaced = quicklistReplaceAtIndex(ql, index,
                                                value->ptr, sdslen(value->ptr));
         if (!replaced) {

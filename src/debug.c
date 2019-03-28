@@ -53,6 +53,10 @@ typedef ucontext_t sigcontext_t;
 #endif
 #endif
 
+#ifndef USE_MEMKIND
+#define createStringObjectPM createStringObject
+#endif
+
 /* ================================= Debugging ============================== */
 
 /* Compute the sha1 of string at 's' with 'len' bytes long.
