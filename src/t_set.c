@@ -55,7 +55,11 @@ int setTypeAdd(robj *subject, sds value) {
         dict *ht = subject->ptr;
         dictEntry *de = dictAddRaw(ht,value,NULL);
         if (de) {
+#ifdef USE_MEMKIND
             dictSetKey(ht,de,sdstoPM(sdsdup(value)));
+#else
+            dictSetKey(ht,de,sdsdup(value));
+#endif
             dictSetVal(ht,de,NULL);
             return 1;
         }
