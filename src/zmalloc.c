@@ -96,10 +96,7 @@ static struct memkind *pmem_kind;
 int zmalloc_get_location (void * ptr)
 {
     struct memkind *temp_kind = memkind_detect_kind(ptr);
-    ///TODO only for validation function should return 0/1
-    if(!temp_kind) {
-        return WRONG_LOCATION;
-    } else if( temp_kind == MEMKIND_DEFAULT ) {
+    if(temp_kind == MEMKIND_DEFAULT) {
         return DRAM_LOCATION;
     } else {
         return PMEM_LOCATION;
