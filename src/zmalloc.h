@@ -104,7 +104,6 @@ void *zmemset(void* ptr, int value, size_t num);
 #include <memkind.h>
 #define DRAM_LOCATION 0
 #define PMEM_LOCATION 1
-#define WRONG_LOCATION 2
 int zmalloc_get_location (void * ptr);
 void zmalloc_destroy_pmem();
 void zmalloc_init_pmem(const char* pm_dir_path, size_t pm_file_size);
