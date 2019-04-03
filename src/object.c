@@ -514,8 +514,8 @@ robj *tryObjectEncoding(robj *o) {
     {
         o->ptr = sdsRemoveFreeSpace(o->ptr);
     }
-#ifdef USE_MEMKING
-    // move string type content to PMEM
+#ifdef USE_MEMKIND
+    /* Move string type content to PMEM */
     o->ptr = sdstoPM(o->ptr);
 #endif
     /* Return the original object. */
