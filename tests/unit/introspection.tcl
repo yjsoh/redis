@@ -94,6 +94,7 @@ start_server {tags {"introspection"}} {
             slaveof
             bind
             requirepass
+            pmem-str-mode
         }
 
         set configs {}
