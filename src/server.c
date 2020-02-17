@@ -2941,6 +2941,7 @@ void initServer(void) {
     scriptingInit(1);
     slowlogInit();
     latencyMonitorInit();
+    pmemThresholdInit();
 }
 
 /* Some steps in server initialization need to be done last (after modules
