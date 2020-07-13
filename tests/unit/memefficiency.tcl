@@ -365,11 +365,13 @@ start_server {tags {"defrag"}} {
                 r config set maxmemory 0
                 set expected_frag 1.3
 
-                r debug mallctl-str thread.tcache.flush VOID
-                # fill the first slab containin 32 regs of 640 bytes.
-                for {set j 0} {$j < 32} {incr j} {
-                    r setrange "_$j" 600 x
+                if {[string match {*jemalloc*} [s mem_allocator]]} {
                     r debug mallctl-str thread.tcache.flush VOID
+                    # fill the first slab containin 32 regs of 640 bytes.
+                    for {set j 0} {$j < 32} {incr j} {
+                        r setrange "_$j" 600 x
+                        r debug mallctl-str thread.tcache.flush VOID
+                    }
                 }
 
                 # add a mass of keys with 600 bytes values, fill the bin of 640 bytes which has 32 regs per slab.
