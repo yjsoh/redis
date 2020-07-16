@@ -307,6 +307,40 @@ void replicationFeedSlaves(list *slaves, int dictid, robj **argv, int argc) {
     }
 }
 
+/* This is a debugging function that gets called when we detect something
+ * wrong with the replication protocol: the goal is to peek into the
+ * replication backlog and show a few final bytes to make simpler to
+ * guess what kind of bug it could be. */
+void showLatestBacklog(void) {
+    if (server.repl_backlog == NULL) return;
+
+    long long dumplen = 256;
+    if (server.repl_backlog_histlen < dumplen)
+        dumplen = server.repl_backlog_histlen;
+
+    /* Identify the first byte to dump. */
+    long long idx =
+      (server.repl_backlog_idx + (server.repl_backlog_size - dumplen)) %
+       server.repl_backlog_size;
+
+    /* Scan the circular buffer to collect 'dumplen' bytes. */
+    sds dump = sdsempty();
+    while(dumplen) {
+        long long thislen =
+            ((server.repl_backlog_size - idx) < dumplen) ?
+            (server.repl_backlog_size - idx) : dumplen;
+
+        dump = sdscatrepr(dump,server.repl_backlog+idx,thislen);
+        dumplen -= thislen;
+        idx = 0;
+    }
+
+    /* Finally log such bytes: this is vital debugging info to
+     * understand what happened. */
+    serverLog(LL_WARNING,"Latest backlog is: '%s'", dump);
+    sdsfree(dump);
+}
+
 /* This function is used in order to proxy what we receive from our master
  * to our sub-slaves. */
 #include <ctype.h>
@@ -746,6 +780,9 @@ void syncCommand(client *c) {
         changeReplicationId();
         clearReplicationId2();
         createReplicationBacklog();
+        serverLog(LL_NOTICE,"Replication backlog created, my new "
+                            "replication IDs are '%s' and '%s'",
+                            server.replid, server.replid2);
     }
 
     /* CASE 1: BGSAVE is in progress, with disk target. */
@@ -1524,6 +1561,10 @@ void readSyncBulkPayload(connection *conn) {
 
         nread = connRead(conn,buf,readlen);
         if (nread <= 0) {
+            if (connGetState(conn) == CONN_STATE_CONNECTED) {
+                /* equivalent to EAGAIN */
+                return;
+            }
             serverLog(LL_WARNING,"I/O error trying to sync with MASTER: %s",
                 (nread == -1) ? strerror(errno) : "connection lost");
             cancelReplicationHandshake();
@@ -2284,6 +2325,10 @@ void syncWithMaster(connection *conn) {
 
     if (psync_result == PSYNC_CONTINUE) {
         serverLog(LL_NOTICE, "MASTER <-> REPLICA sync: Master accepted a Partial Resynchronization.");
+        if (server.supervised_mode == SUPERVISED_SYSTEMD) {
+            redisCommunicateSystemd("STATUS=MASTER <-> REPLICA sync: Partial Resynchronization accepted. Ready to accept connections.\n");
+            redisCommunicateSystemd("READY=1\n");
+        }
         return;
     }
 
@@ -2473,14 +2518,18 @@ void replicationUnsetMaster(void) {
 
     sdsfree(server.masterhost);
     server.masterhost = NULL;
-    /* When a slave is turned into a master, the current replication ID
-     * (that was inherited from the master at synchronization time) is
-     * used as secondary ID up to the current offset, and a new replication
-     * ID is created to continue with a new replication history. */
-    shiftReplicationId();
     if (server.master) freeClient(server.master);
     replicationDiscardCachedMaster();
     cancelReplicationHandshake();
+    /* When a slave is turned into a master, the current replication ID
+     * (that was inherited from the master at synchronization time) is
+     * used as secondary ID up to the current offset, and a new replication
+     * ID is created to continue with a new replication history.
+     *
+     * NOTE: this function MUST be called after we call
+     * freeClient(server.master), since there we adjust the replication
+     * offset trimming the final PINGs. See Github issue #7320. */
+    shiftReplicationId();
     /* Disconnecting all the slaves is required: we need to inform slaves
      * of the replication ID change (see shiftReplicationId() call). However
      * the slaves will be able to partially resync with us, so it will be
@@ -2721,9 +2770,19 @@ void replicationCacheMaster(client *c) {
  * current offset if no data was lost during the failover. So we use our
  * current replication ID and offset in order to synthesize a cached master. */
 void replicationCacheMasterUsingMyself(void) {
+    serverLog(LL_NOTICE,
+        "Before turning into a replica, using my own master parameters "
+        "to synthesize a cached master: I may be able to synchronize with "
+        "the new master with just a partial transfer.");
+
+    /* This will be used to populate the field server.master->reploff
+     * by replicationCreateMasterClient(). We'll later set the created
+     * master as server.cached_master, so the replica will use such
+     * offset for PSYNC. */
+    server.master_initial_offset = server.master_repl_offset;
+
     /* The master client we create can be set to any DBID, because
      * the new master will start its replication stream with SELECT. */
-    server.master_initial_offset = server.master_repl_offset;
     replicationCreateMasterClient(NULL,-1);
 
     /* Use our own ID / offset. */
@@ -2733,7 +2792,6 @@ void replicationCacheMasterUsingMyself(void) {
     unlinkClient(server.master);
     server.cached_master = server.master;
     server.master = NULL;
-    serverLog(LL_NOTICE,"Before turning into a replica, using my master parameters to synthesize a cached master: I may be able to synchronize with the new master with just a partial transfer.");
 }
 
 /* Free a cached master, called when there are no longer the conditions for
