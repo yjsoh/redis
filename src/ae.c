@@ -238,6 +238,7 @@ long long aeCreateTimeEvent(aeEventLoop *eventLoop, long long milliseconds,
     te->clientData = clientData;
     te->prev = NULL;
     te->next = eventLoop->timeEventHead;
+    te->refcount = 0;
     if (te->next)
         te->next->prev = te;
     eventLoop->timeEventHead = te;
@@ -316,6 +317,13 @@ static int processTimeEvents(aeEventLoop *eventLoop) {
         /* Remove events scheduled for deletion. */
         if (te->id == AE_DELETED_EVENT_ID) {
             aeTimeEvent *next = te->next;
+            /* If a reference exists for this timer event,
+             * don't free it. This is currently incremented
+             * for recursive timerProc calls */
+            if (te->refcount) {
+                te = next;
+                continue;
+            }
             if (te->prev)
                 te->prev->next = te->next;
             else
@@ -345,7 +353,9 @@ static int processTimeEvents(aeEventLoop *eventLoop) {
             int retval;
 
             id = te->id;
+            te->refcount++;
             retval = te->timeProc(eventLoop, id, te->clientData);
+            te->refcount--;
             processed++;
             if (retval != AE_NOMORE) {
                 aeAddMillisecondsToNow(retval,&te->when_sec,&te->when_ms);
@@ -370,6 +380,7 @@ static int processTimeEvents(aeEventLoop *eventLoop) {
  * if flags has AE_DONT_WAIT set the function returns ASAP until all
  * the events that's possible to process without to wait are processed.
  * if flags has AE_CALL_AFTER_SLEEP set, the aftersleep callback is called.
+ * if flags has AE_CALL_BEFORE_SLEEP set, the beforesleep callback is called.
  *
  * The function returns the number of events processed. */
 int aeProcessEvents(aeEventLoop *eventLoop, int flags)
@@ -428,6 +439,9 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags)
             tvp = &tv;
         }
 
+        if (eventLoop->beforesleep != NULL && flags & AE_CALL_BEFORE_SLEEP)
+            eventLoop->beforesleep(eventLoop);
+
         /* Call the multiplexing API, will return only on timeout or when
          * some event fires. */
         numevents = aeApiPoll(eventLoop, tvp);
@@ -464,6 +478,7 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags)
             if (!invert && fe->mask & mask & AE_READABLE) {
                 fe->rfileProc(eventLoop,fd,fe->clientData,mask);
                 fired++;
+                fe = &eventLoop->events[fd]; /* Refresh in case of resize. */
             }
 
             /* Fire the writable event. */
@@ -476,8 +491,11 @@ int aeProcessEvents(aeEventLoop *eventLoop, int flags)
 
             /* If we have to invert the call, fire the readable event now
              * after the writable one. */
-            if (invert && fe->mask & mask & AE_READABLE) {
-                if (!fired || fe->wfileProc != fe->rfileProc) {
+            if (invert) {
+                fe = &eventLoop->events[fd]; /* Refresh in case of resize. */
+                if ((fe->mask & mask & AE_READABLE) &&
+                    (!fired || fe->wfileProc != fe->rfileProc))
+                {
                     fe->rfileProc(eventLoop,fd,fe->clientData,mask);
                     fired++;
                 }
@@ -518,9 +536,9 @@ int aeWait(int fd, int mask, long long milliseconds) {
 void aeMain(aeEventLoop *eventLoop) {
     eventLoop->stop = 0;
     while (!eventLoop->stop) {
-        if (eventLoop->beforesleep != NULL)
-            eventLoop->beforesleep(eventLoop);
-        aeProcessEvents(eventLoop, AE_ALL_EVENTS|AE_CALL_AFTER_SLEEP);
+        aeProcessEvents(eventLoop, AE_ALL_EVENTS|
+                                   AE_CALL_BEFORE_SLEEP|
+                                   AE_CALL_AFTER_SLEEP);
     }
 }
 

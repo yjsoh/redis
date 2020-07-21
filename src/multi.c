@@ -58,6 +58,13 @@ void queueMultiCommand(client *c) {
     multiCmd *mc;
     int j;
 
+    /* No sense to waste memory if the transaction is already aborted.
+     * this is useful in case client sends these in a pipeline, or doesn't
+     * bother to read previous responses and didn't notice the multi was already
+     * aborted. */
+    if (c->flags & CLIENT_DIRTY_EXEC)
+        return;
+
     c->mstate.commands = zrealloc(c->mstate.commands,
             sizeof(multiCmd)*(c->mstate.count+1));
     mc = c->mstate.commands+c->mstate.count;
@@ -128,6 +135,15 @@ void execCommand(client *c) {
         return;
     }
 
+    /* If we are in -BUSY state, flag the transaction and return the
+     * -BUSY error, like Redis <= 5. This is a temporary fix, may be changed
+     *  ASAP, see issue #7353 on Github. */
+    if (server.lua_timedout) {
+        flagTransaction(c);
+        addReply(c, shared.slowscripterr);
+        return;
+    }
+
     /* Check if we need to abort the EXEC because:
      * 1) Some WATCHed key was touched.
      * 2) There was a previous error while queueing commands.
@@ -172,7 +188,10 @@ void execCommand(client *c) {
          * This way we'll deliver the MULTI/..../EXEC block as a whole and
          * both the AOF and the replication link will have the same consistency
          * and atomicity guarantees. */
-        if (!must_propagate && !(c->cmd->flags & (CMD_READONLY|CMD_ADMIN))) {
+        if (!must_propagate &&
+            !server.loading &&
+            !(c->cmd->flags & (CMD_READONLY|CMD_ADMIN)))
+        {
             execCommandPropagateMulti(c);
             must_propagate = 1;
         }

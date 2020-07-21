@@ -101,11 +101,11 @@ static sds _sdsnewlen(const void *init, size_t initlen, int on_dram) {
 
     sh = (on_dram == SDS_DRAM_VARIANT) ? s_dram_malloc(hdrlen+initlen+1)
                                        : s_malloc(hdrlen+initlen+1);
+    if (sh == NULL) return NULL;
     if (init==SDS_NOINIT)
         init = NULL;
     else if (!init)
         memset(sh, 0, hdrlen+initlen+1);
-    if (sh == NULL) return NULL;
     s = (char*)sh+hdrlen;
     fp = ((unsigned char*)s)-1;
     switch(type) {
