@@ -735,6 +735,7 @@ int loadAppendOnlyFile(char *filename) {
         if (!(loops++ % 1000)) {
             loadingProgress(ftello(fp));
             processEventsWhileBlocked();
+            adjustPmemThresholdCycle();
         }
 
         if (fgets(buf,sizeof(buf),fp) == NULL) {
